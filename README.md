@@ -2,6 +2,8 @@
 **In-memory Encrypted Shellcode Execution Suite**  
 ShadowStep is a research-oriented tool designed to execute an encrypted shellcode, ensuring that it is **never fully decrypted** in memory. At any given time, only a single instruction is available in plaintext, significantly reducing exposure to traditional memory-scanning techniques.
 
+![shadowstep](https://github.com/jtalamini/shadowstep/blob/main/shadowstep.png)
+
 Many endpoint detection systems rely, among other techniques, on static memory pattern scanning to identify malicious payloads. ShadowStep mitigates this approach by decrypting, executing, and immediately re-encrypting shellcode instructions one at a time.
 
 > ⚠️ This project is intended for research, educational, and defensive security purposes only.
