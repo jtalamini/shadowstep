@@ -9,119 +9,6 @@
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "Pathcch.lib")
 
-// absolute path to vswhere.exe (used to locate MSBuild)
-#define VSWHERE_PATH L"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
-
-/*
- * uses vswhere.exe to locate the latest installed MSBuild.exe.
- * the function spawns vswhere, captures its stdout via a pipe,
- * and extracts the first returned MSBuild path.
- *
- * outPath      - output buffer receiving the full MSBuild path
- * outPathSize  - size of outPath in wchar_t units
- *
- * returns TRUE on success, FALSE on failure.
- */
-BOOL FindMSBuildPath(wchar_t* outPath, DWORD outPathSize)
-{
-	STARTUPINFOW si;
-	PROCESS_INFORMATION pi;
-	SECURITY_ATTRIBUTES sa;
-	HANDLE hRead = NULL, hWrite = NULL;
-	DWORD bytesRead;
-	char bufferA[2048]; // raw UTF-8 output from vswhere
-	wchar_t bufferW[2048]; // converted UTF-16 string
-
-	if (!outPath || outPathSize == 0)
-		return FALSE;
-
-	outPath[0] = L'\0';
-
-	ZeroMemory(&si, sizeof(si));
-	ZeroMemory(&pi, sizeof(pi));
-	si.cb = sizeof(si);
-
-	// allow child process to inherit pipe handles
-	sa.nLength = sizeof(sa);
-	sa.lpSecurityDescriptor = NULL;
-	sa.bInheritHandle = TRUE;
-
-	// create an anonymous pipe to capture stdout/stderr
-	if (!CreatePipe(&hRead, &hWrite, &sa, 0))
-		return FALSE;
-
-	// prevent read handle from being inherited
-	SetHandleInformation(hRead, HANDLE_FLAG_INHERIT, 0);
-
-	// command line invoking vswhere to locate MSBuild.exe
-	wchar_t cmdLine[] =
-		L"\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe\" "
-		L"-latest -products * -requires Microsoft.Component.MSBuild "
-		L"-find MSBuild\\**\\Bin\\MSBuild.exe";
-
-	// redirect stdout and stderr to the pipe
-	si.dwFlags = STARTF_USESTDHANDLES;
-	si.hStdOutput = hWrite;
-	si.hStdError = hWrite;
-
-	if (!CreateProcessW(
-		NULL,
-		cmdLine,
-		NULL,
-		NULL,
-		TRUE,
-		CREATE_NO_WINDOW,
-		NULL,
-		NULL,
-		&si,
-		&pi))
-	{
-		CloseHandle(hRead);
-		CloseHandle(hWrite);
-		return FALSE;
-	}
-
-	// close write end in parent; child owns it now
-	CloseHandle(hWrite);
-
-	if (!ReadFile(hRead, bufferA, sizeof(bufferA) - 1, &bytesRead, NULL)) {
-		CloseHandle(hRead);
-		return FALSE;
-	}
-
-	bufferA[bytesRead] = '\0';
-
-	// converte UTF-8 -> UTF-16
-	if (!MultiByteToWideChar(
-		CP_UTF8,
-		0,
-		bufferA,
-		-1,
-		bufferW,
-		_countof(bufferW)))
-	{
-		CloseHandle(hRead);
-		return FALSE;
-	}
-
-	// strip CR/LF characters
-	wchar_t* nl = wcspbrk(bufferW, L"\r\n");
-	if (nl) *nl = L'\0';
-
-	if (bufferW[0] == L'\0') {
-		CloseHandle(hRead);
-		return FALSE;
-	}
-
-	// copy the result to output buffer
-	wcscpy_s(outPath, outPathSize, bufferW);
-
-	CloseHandle(hRead);
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-
-	return TRUE;
-}
 
 /*
  * builds a path for a generated source file:
@@ -300,64 +187,34 @@ BOOL FileExists(CONST WCHAR* path) {
  */
 int BuildProject(const WCHAR* inputFile, const WCHAR* vcxprojPath)
 {
-	wchar_t msbuildPath[MAX_PATH];
-	wchar_t cmdLine[32768];
-	STARTUPINFOW si;
-	PROCESS_INFORMATION pi;
-	DWORD exitCode;
-
-	if (!FindMSBuildPath(msbuildPath, _countof(msbuildPath))) {
-		wprintf(L"[-] MSBuild not found (vswhere failed)\n");
-		return 0;
-	}
-
-	wprintf(L"[+] Using MSBuild: %s\n", msbuildPath);
-
+	wchar_t cmdLine[1024];
 	wchar_t targetName[MAX_PATH];
+	int ret;
+
 	GetFileNameWithoutExtension(
 		inputFile,
 		targetName,
 		_countof(targetName)
 	);
-	
-	// construct MSBuild command line
+
 	_snwprintf(
 		cmdLine,
 		_countof(cmdLine),
-		L"\"%s\" \"%s\" /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /p:TargetName=shadow%s",
-		msbuildPath,
+		L"msbuild \"%s\" "
+		L"/p:Configuration=Release "
+		L"/p:Platform=x64 "
+		L"/verbosity:minimal "
+		L"/p:TargetName=shadow%s",
 		vcxprojPath,
 		targetName
 	);
 
-	ZeroMemory(&si, sizeof(si));
-	ZeroMemory(&pi, sizeof(pi));
-	si.cb = sizeof(si);
+	wprintf(L"[+] Executing: %s\n", cmdLine);
 
-	if (!CreateProcessW(
-		NULL,
-		cmdLine,
-		NULL,
-		NULL,
-		FALSE,
-		0,
-		NULL,
-		NULL,
-		&si,
-		&pi))
-	{
-		wprintf(L"[-] Failed to start MSBuild (error=%lu)\n", GetLastError());
-		return 0;
-	}
+	ret = _wsystem(cmdLine);
 
-	WaitForSingleObject(pi.hProcess, INFINITE);
-	GetExitCodeProcess(pi.hProcess, &exitCode);
-
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-
-	if (exitCode != 0) {
-		wprintf(L"[-] MSBuild failed (exit code=%lu)\n", exitCode);
+	if (ret != 0) {
+		wprintf(L"[-] MSBuild failed (return code=%d)\n", ret);
 		return 0;
 	}
 

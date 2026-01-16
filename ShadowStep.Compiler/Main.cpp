@@ -17,7 +17,7 @@ int wmain(int argc, wchar_t* argv[]) {
     // - the path to the ShadowStep.Runtime.vcxproj file
     if (argc < 3) {
         wprintf(L"Usage: %s <path>\n", argv[0]);
-        wprintf(L"Example: %s C:\\Users\\user\\source\\repos\\payloads\\calc.bin C:\\Users\\user\\source\\shadowstep\\ShadowStep.Runtime\\ShadowStep.Runtime.vcxproj", argv[0]);
+        wprintf(L"Example: %s C:\\Users\\user\\source\\payloads\\calc.bin C:\\Users\\user\\source\\repos\\shadowstep\\ShadowStep.Runtime\\ShadowStep.Runtime.vcxproj", argv[0]);
         return 1;
     }
 
