@@ -55,7 +55,8 @@ Add the integration for Visual Studio:
 vcpkg integrate install
 ```
 
-Build the ShadowStep Compiler using MSBuild:  
+Open a Developer Command Prompt for VS.  
+Build the ShadowStep Compiler using MSBuild (
 ```cmd
 git clone git@github.com:jtalamini/shadowstep.git
 msbuild shadowstep\ShadowStep.Compiler\ShadowStep.Compiler.vcxproj /t:Clean,Build /p:Configuration=Release /p:Platform=x64
@@ -100,9 +101,8 @@ Finally, build the `ShadowStep.Compiler` project using Visual Studio.
 
 ## Usage
 
-> ⚠️ This project supports only x64 shellcodes as a design choice.
-
-Run the following command:
+Open a Developer Command Prompt for VS.  
+Execute the ShadowStep Compiler:  
 ```cmd
 .\ShadowStep.Compiler.exe <path-to-your-shellcode> <path-to-the-shadowstep-runtime-project-file>
 ```
@@ -112,6 +112,8 @@ The mandatory arguments are:
 
 This generates a ready-to-use x64 executable file that implements ShadowStep on the given shellcode.
 Since `ShadowStep.Compiler.exe` automatically builds the `ShadowStep.Runtime` project using _msbuild_, the resulting file should be under `ShadowStep.Runtime\x64\`.
+
+> ⚠️ This project supports only x64 shellcodes as a design choice.
 
 ## OPSEC
 Detection of the artifacts generated using ShadowStep is _still possible_ for instance when used to obfuscate C2 payloads that rely on spawning new processes in which they write BOFs to execute them.
