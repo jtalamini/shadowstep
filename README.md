@@ -132,7 +132,9 @@ This suite was tested on the following _msfvenom_ payloads:
 It was also tested on `Havoc C2` framework, but as already mentioned, since most agents execute BOFs and spawn a new process every time it is not possible to rely on ShadowStep to hide that kind of execution.
 
 ## Acknowledgements
-Special thanks to the developers of the **Capstone** library for their excellent work and for providing a powerful and well-designed disassembly framework that made this research possible.
+[Capstone](https://github.com/capstone-engine/capstone) developers for providing a powerful and well-designed disassembly framework that made this research possible.  
+[vari.sh](https://github.com/vari-sh) for the wonderful artwork and for providing valuable feedbacks during development.  
+[devisions](https://github.com/devisions) for motivating me to complete this tool.
 
 ## Licensing
 This project is licensed under the MIT License. See the accompanying [LICENSE](./LICENSE) file for more information.
