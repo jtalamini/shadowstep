@@ -56,7 +56,7 @@ vcpkg integrate install
 ```
 
 Open a Developer Command Prompt for VS.  
-Build the ShadowStep Compiler using MSBuild (
+Build the ShadowStep Compiler using MSBuild:  
 ```cmd
 git clone git@github.com:jtalamini/shadowstep.git
 msbuild shadowstep\ShadowStep.Compiler\ShadowStep.Compiler.vcxproj /t:Clean,Build /p:Configuration=Release /p:Platform=x64
@@ -106,7 +106,7 @@ Execute the ShadowStep Compiler:
 ```cmd
 .\ShadowStep.Compiler.exe <path-to-your-shellcode> <path-to-the-shadowstep-runtime-project-file>
 ```
-The mandatory arguments are:
+The mandatory arguments are:  
 - `<path-to-your-shellcode>` is the path of a .bin file which contains your shellcode
 - `<path-to-the-shadowstep-runtime-project-file>` is the full path of the `ShadowStep.Compiler\ShadowStep.Runtime.vcxproj` project file.
 
