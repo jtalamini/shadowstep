@@ -137,7 +137,7 @@ Install the missing toolset (recommended if you want to keep v143):
 Install Visual Studio 2022 (or the Visual Studio 2022 Build Tools) and ensure the Desktop development with C++ workload is enabled (MSVC v143, Windows SDK, MSBuild).
 
 **Solution 2**  
-Retarget the solution to the toolset installed on your system:
+Retarget the solution to the toolset installed on your system:  
 Open the solution file (ShadowStep.sln) in Visual Studio.  
 When prompted, accept the Retarget action, or manually:  
 Right-click the solution in Solution Explorer → Retarget solution
