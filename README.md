@@ -13,8 +13,8 @@ Many endpoint detection systems rely, among other techniques, on static memory p
 - [Structure](#structure)
 - [Setup](#setup)
   - [Requirements](#requirements)
-  - [CLI](#cli-setup)
-  - [GUI](#gui-setup)
+  - [CLI Setup](#cli-setup)
+  - [GUI Setup](#gui-setup)
 - [Troubleshooting](#troubleshooting)
 - [Usage](#usage)
 - [OPSEC](#opsec)
@@ -57,7 +57,7 @@ The solution `ShadowStep` contains two Visual Studio projects:
 - **Visual Studio (Windows)** installed with the **Desktop development with C++** workload.
   - Make sure **MSBuild** and the **Windows SDK** are included.
 
-### CLI setup
+### CLI Setup
 
 1. Install vcpkg from the Command Line:  
 ```cmd
@@ -84,7 +84,7 @@ msbuild shadowstep\ShadowStep.Compiler\ShadowStep.Compiler.vcxproj /t:Clean,Buil
 
 You might choose to build the project with Visual Studio as well.
 
-### GUI setup
+### GUI Setup
 
 1. Clone this repo:  
 ```cmd
