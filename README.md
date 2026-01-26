@@ -54,8 +54,7 @@ The solution `ShadowStep` contains two Visual Studio projects:
 ## Setup
 
 ### Requirements
-- **Visual Studio (Windows)** installed with the **Desktop development with C++** workload.
-  - Make sure **MSBuild** and the **Windows SDK** are included.
+- Make sure you have **Visual Studio** installed on your Windows system with the **Desktop development with C++** workload.
 
 ### CLI Setup
 
